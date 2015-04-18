@@ -1,3 +1,4 @@
+from matplotlib.cbook import Null
 __author__ = 'Trevor, Eric'
 
 
@@ -98,6 +99,9 @@ def main():
         # determine the best overall template matching result
         score, top_left, bottom_right, coordinates = decide(scores)
 
+        #Initialize object_loc so if it doesn't exist, camera won't move -Eric
+        object_loc = None
+        
         # if the best result passes the threshold then the object was detected
         # so draw a bounding box around the object
         # IMPORTANT: object_loc will be the coordinates used for tracking
@@ -106,8 +110,12 @@ def main():
             cv2.rectangle(cam_frame, top_left, bottom_right, 255, 4)
             object_loc = coordinates
         
-        #begin tracking -Eric
-        tracking(coordinates, center)
+        #check to see if object_loc was initialized, otherwise use center -Eric
+        if not object_loc:
+            object_loc = center
+            
+        #begin tracking -Eric    
+        tracking(object_loc, center)
         
         # display window with camera feed and bounding box
         cv2.imshow(win_name, cam_frame)
