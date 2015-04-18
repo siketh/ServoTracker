@@ -51,6 +51,8 @@ def tracking(location, center):
     
     #print the output to vector.txt -Eric
     f = open('vector.txt', 'w')
+    f.write(angle)
+    f.write(magnitude)
     f.close()
     
 # sorts the detections by their maximum value returned from template matching
