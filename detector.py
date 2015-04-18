@@ -1,5 +1,5 @@
-__author__ = 'Trevor'
-__author__ = 'Eric'
+__author__ = 'Trevor, Eric'
+
 
 # if you want to change the database all you have to change is the images in the root folder and keep
 # the same naming convention, no code needs to change
