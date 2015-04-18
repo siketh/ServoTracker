@@ -1,4 +1,5 @@
 __author__ = 'Trevor'
+__author__ = 'Eric'
 
 # if you want to change the database all you have to change is the images in the root folder and keep
 # the same naming convention, no code needs to change
@@ -10,7 +11,6 @@ import string
 import numpy as np
 from operator import itemgetter
 
-import cv2
 
 
 # copy database images, will grab all images starting with "test_" and append to database list
@@ -35,7 +35,24 @@ def detect(image, scene):
     bottom_right = (top_left[0] + width, top_left[1] + height)
     return max_val, top_left, bottom_right, max_loc
 
-
+#Outputs the angle (degrees) and magnitude of the vector between the center of the frame
+#and the location of the target to file 'vector.txt' -Eric
+def tracking(location, center):
+    #calculate the difference of the target location and the center of the frame -Eric
+    x_rot = location[0] - center[0]
+    y_rot = location[1] - center[1]
+    
+    #get the magnitude of the vector
+    #to be used to determine how quickly to move the arduino -Eric
+    magnitude = math.sqrt(x_rot**2 + y_rot**2)
+    
+    #gives the angle of the vector in radians -Eric
+    angle = math.degrees(math.atan2(y_rot,x_rot))
+    
+    #print the output to vector.txt -Eric
+    f = open('vector.txt', 'w')
+    f.close()
+    
 # sorts the detections by their maximum value returned from template matching
 # highest value is at index 0
 def decide(scores):
@@ -49,6 +66,13 @@ def main():
     # capture video feed
     cam = cv2.VideoCapture(0)
 
+    #calculate the width and height of the camera frame -Eric
+    width = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
+    height = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    
+    #calculate the center of the frame -Eric
+    center = [width/2, height/2]
+    
     # initialize window with camera feed
     win_name = "QR Detector"
     cv2.namedWindow(win_name, cv2.CV_WINDOW_AUTOSIZE)
@@ -79,10 +103,14 @@ def main():
             print(score)
             cv2.rectangle(cam_frame, top_left, bottom_right, 255, 4)
             object_loc = coordinates
-
+        
+        #begin tracking -Eric
+        tracking(coordinates, center)
+        
         # display window with camera feed and bounding box
         cv2.imshow(win_name, cam_frame)
 
+        
         # if ESCAPE key pressed, terminate execution
         key = cv2.waitKey(10)
         if key == 27:
