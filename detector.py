@@ -10,6 +10,7 @@ import glob
 import string
 import numpy as np
 from operator import itemgetter
+import serial
 
 
 
@@ -36,7 +37,7 @@ def detect(image, scene):
     return max_val, top_left, bottom_right, max_loc
 
 #Outputs the angle (degrees) and magnitude of the vector between the center of the frame
-#and the location of the target to file 'vector.txt' -Eric
+#and the location of of the target to the arduino via serial connection
 def tracking(location, center):
     #calculate the difference of the target location and the center of the frame -Eric
     x_rot = location[0] - center[0]
@@ -46,15 +47,37 @@ def tracking(location, center):
     #to be used to determine how quickly to move the arduino -Eric
     magnitude = math.sqrt(x_rot**2 + y_rot**2)
     
-    #gives the angle of the vector in radians -Eric
+    #gives the angle of the vector in degrees -Eric
     angle = math.degrees(math.atan2(y_rot,x_rot))
     
-    #print the output to vector.txt -Eric
+    #open serial connection to arduino -Eric
+    ser = serial.Serial("COM9", "9600")
+    ser.open()
+    
+    #check to see if buffer is empty before sending-Eric
+    while ser.isWaiting() is not 0:
+        pass
+    
+    #send the angle -Eric    
+    ser.write(str(angle))
+    
+    #wait for buffer to clear -Eric
+    while ser.isWaiting() is not 0:
+        pass
+    
+    #send the magnitude -Eric
+    ser.write(str(magnitude)) 
+    
+    #close the serial connection when finished -Eric
+    ser.__del__()   
+        
+    #incase we need to switch to file output -Eric
+    ''' #print the output to vector.txt -Eric
     f = open('vector.txt', 'w')
     f.write(angle)
     f.write(magnitude)
     f.close()
-    
+    '''
 # sorts the detections by their maximum value returned from template matching
 # highest value is at index 0
 def decide(scores):
