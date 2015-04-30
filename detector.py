@@ -38,10 +38,13 @@ def detect(image, scene):
 
 #Outputs the angle (degrees) and magnitude of the vector between the center of the frame
 #and the location of of the target to the arduino via serial connection
-def tracking(location, center):
+def tracking(image, location, center):
     #calculate the difference of the target location and the center of the frame -Eric
     x_rot = location[0] - center[0]
     y_rot = location[1] - center[1]
+    
+    #Draw line from center to location
+    cv2.line(image, center, location, 255, 4)
     
     #get the magnitude of the vector
     #to be used to determine how quickly to move the arduino -Eric
@@ -70,8 +73,10 @@ def tracking(location, center):
     
     #close the serial connection when finished -Eric
     ser.__del__()   
+    
+    
         
-    #incase we need to switch to file output -Eric
+    #in case we need to switch to file output -Eric
     ''' #print the output to vector.txt -Eric
     f = open('vector.txt', 'w')
     f.write(angle)
@@ -137,7 +142,7 @@ def main():
             object_loc = center
             
         #begin tracking -Eric    
-        tracking(object_loc, center)
+        tracking(cam_frame, object_loc, center)
         
         # display window with camera feed and bounding box
         cv2.imshow(win_name, cam_frame)
