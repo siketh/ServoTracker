@@ -43,7 +43,7 @@ def tracking(image, location, center):
     x_rot = location[0] - center[0]
     y_rot = location[1] - center[1]
     
-    #Draw line from center to location
+    #Draw line from center to location -Eric
     cv2.line(image, center, location, 255, 4)
     
     #get the magnitude of the vector
