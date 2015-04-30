@@ -1,4 +1,5 @@
-__author__ = 'Trevor'
+__author__ = 'Trevor, Eric'
+
 
 # if you want to change the database all you have to change is the images in the root folder and keep
 # the same naming convention, no code needs to change
@@ -9,8 +10,8 @@ import glob
 import string
 import numpy as np
 from operator import itemgetter
+import serial
 
-import cv2
 
 
 # copy database images, will grab all images starting with "test_" and append to database list
@@ -35,7 +36,53 @@ def detect(image, scene):
     bottom_right = (top_left[0] + width, top_left[1] + height)
     return max_val, top_left, bottom_right, max_loc
 
-
+#Outputs the angle (degrees) and magnitude of the vector between the center of the frame
+#and the location of of the target to the arduino via serial connection
+def tracking(image, location, center):
+    #calculate the difference of the target location and the center of the frame -Eric
+    x_rot = location[0] - center[0]
+    y_rot = location[1] - center[1]
+    
+    #Draw line from center to location
+    cv2.line(image, center, location, 255, 4)
+    
+    #get the magnitude of the vector
+    #to be used to determine how quickly to move the arduino -Eric
+    magnitude = math.sqrt(x_rot**2 + y_rot**2)
+    
+    #gives the angle of the vector in degrees -Eric
+    angle = math.degrees(math.atan2(y_rot,x_rot))
+    
+    #open serial connection to arduino -Eric
+    ser = serial.Serial("COM9", "9600")
+    ser.open()
+    
+    #check to see if buffer is empty before sending-Eric
+    while ser.isWaiting() is not 0:
+        pass
+    
+    #send the angle -Eric    
+    ser.write(str(angle))
+    
+    #wait for buffer to clear -Eric
+    while ser.isWaiting() is not 0:
+        pass
+    
+    #send the magnitude -Eric
+    ser.write(str(magnitude)) 
+    
+    #close the serial connection when finished -Eric
+    ser.__del__()   
+    
+    
+        
+    #in case we need to switch to file output -Eric
+    ''' #print the output to vector.txt -Eric
+    f = open('vector.txt', 'w')
+    f.write(angle)
+    f.write(magnitude)
+    f.close()
+    '''
 # sorts the detections by their maximum value returned from template matching
 # highest value is at index 0
 def decide(scores):
@@ -49,6 +96,13 @@ def main():
     # capture video feed
     cam = cv2.VideoCapture(0)
 
+    #calculate the width and height of the camera frame -Eric
+    width = cam.get(cv2.CAP_PROP_FRAME_WIDTH)
+    height = cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    
+    #calculate the center of the frame -Eric
+    center = [width/2, height/2]
+    
     # initialize window with camera feed
     win_name = "QR Detector"
     cv2.namedWindow(win_name, cv2.CV_WINDOW_AUTOSIZE)
@@ -72,6 +126,9 @@ def main():
         # determine the best overall template matching result
         score, top_left, bottom_right, coordinates = decide(scores)
 
+        #Initialize object_loc so if it doesn't exist, camera won't move -Eric
+        object_loc = None
+        
         # if the best result passes the threshold then the object was detected
         # so draw a bounding box around the object
         # IMPORTANT: object_loc will be the coordinates used for tracking
@@ -79,10 +136,18 @@ def main():
             print(score)
             cv2.rectangle(cam_frame, top_left, bottom_right, 255, 4)
             object_loc = coordinates
-
+        
+        #check to see if object_loc was initialized, otherwise use center -Eric
+        if not object_loc:
+            object_loc = center
+            
+        #begin tracking -Eric    
+        tracking(cam_frame, object_loc, center)
+        
         # display window with camera feed and bounding box
         cv2.imshow(win_name, cam_frame)
 
+        
         # if ESCAPE key pressed, terminate execution
         key = cv2.waitKey(10)
         if key == 27:
