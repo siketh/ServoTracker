@@ -28,7 +28,7 @@ def init_db():
 # template matching detection: returns the max, the top left and bottom right of the bounding box
 # for the object, and the coordinates of the maximum value
 def detect(image, scene):
-    method = eval('cv2.TM_CCOEFF')
+    method = eval('cv2.TM_CCOEFF_NORMED')
     height, width = image.shape[:2]
     result = cv2.matchTemplate(scene, image, method)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
